@@ -9,8 +9,8 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 if not GROQ_API_KEY:
     raise SystemExit("GROQ_API_KEY not found in environment. Add it to your .env file.")
 
-model = ChatGroq(model="llama-3.1-70b-versatile", temperature=0)
-print(f"Using Groq with llama-3.1-70b-versatile")
+model = ChatGroq(model="openai/gpt-oss-120b", temperature=0)
+print(f"Using Groq with openai/gpt-oss-120b")
 
 def get_weather(city: str) -> str:
     """Get the current weather for a given city."""
