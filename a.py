@@ -1,31 +1,16 @@
-import langchain
 import os
-from dotenv import load_dotenv, find_dotenv
-from langchain.agents import create_agent
+from dotenv import load_dotenv
+from langchain_groq import ChatGroq
+from langgraph.prebuilt import create_react_agent
 
-print("LangChain version:", langchain.__version__)
+load_dotenv()
 
-load_dotenv(find_dotenv(), override=True)
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+if not GROQ_API_KEY:
+    raise SystemExit("GROQ_API_KEY not found in environment. Add it to your .env file.")
 
-PROVIDER = "groq"
-
-if PROVIDER == "groq":
-    MODEL = "groq:llama-3.3-70b-versatile"
-    REQUIRED_KEY = "GROQ_API_KEY"
-elif PROVIDER == "gemini":
-    MODEL = "google_genai:gemini-2.0-flash"
-    REQUIRED_KEY = "GOOGLE_API_KEY"
-else:
-    MODEL = "openai:gpt-4o-mini"
-    REQUIRED_KEY = "OPENAI_API_KEY"
-
-key = os.environ.get(REQUIRED_KEY)
-if not key:
-    raise SystemExit(
-        f"{REQUIRED_KEY} not found in environment. "
-        f"Add it to your .env for provider '{PROVIDER}'."
-    )
-print(f"Provider={PROVIDER}  Model={MODEL}  Key={key[:6]}...{key[-4:]}")
+model = ChatGroq(model="llama-3.1-70b-versatile", temperature=0)
+print(f"Using Groq with llama-3.1-70b-versatile")
 
 def get_weather(city: str) -> str:
     """Get the current weather for a given city."""
@@ -51,28 +36,27 @@ def get_population(city: str) -> str:
 
 TOOLS = [get_weather, add, multiply, get_population]
 
-agent = create_agent(
-    model=MODEL,
+agent = create_react_agent(
+    model=model,
     tools=TOOLS,
-    system_prompt=(
-        "You are a helpful assistant. Use the available tools when needed. "
-        "Always state the final result clearly and completely in your answer."
-    ),
 )
 
 def ask(question: str, show_steps: bool = True) -> None:
-    response = agent.invoke({"messages": [{"role": "user", "content": question}]})
+    from langchain_core.messages import HumanMessage
+
+    response = agent.invoke({"messages": [HumanMessage(content=question)]})
     print(f"\nQ: {question}")
 
     if show_steps:
         for msg in response["messages"]:
-            if msg.type == "ai" and getattr(msg, "tool_calls", None):
+            if hasattr(msg, "tool_calls") and msg.tool_calls:
                 for tc in msg.tool_calls:
                     print(f"   [tool call]   {tc['name']}({tc['args']})")
-            elif msg.type == "tool":
+            elif hasattr(msg, "content") and hasattr(msg, "name"):
                 print(f"   [tool result] {msg.content}")
 
-    print(f"A: {response['messages'][-1].content}")
+    final_message = response["messages"][-1]
+    print(f"A: {final_message.content}")
 
 if __name__ == "__main__":
     ask("What is the weather like in New York?")

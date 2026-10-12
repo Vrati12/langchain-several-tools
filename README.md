@@ -69,6 +69,24 @@ The agents use LangChain's tool calling capabilities:
 - "What is the weather like in New York?"
 - "How's the weather in London?"
 
-## Note
+## Important Notes
 
-This code uses LangChain's agent API. Ensure you have compatible versions of langchain and langgraph installed.
+### Model Configuration
+⚠️ **Groq frequently deprecates older models.** If you encounter a `model_decommissioned` or `model_not_found` error:
+
+1. Visit https://console.groq.com/docs/models to see currently available models
+2. Update the model name in both `a.py` and `b.py`:
+   ```python
+   model = ChatGroq(model="YOUR_CURRENT_MODEL_NAME", temperature=0)
+   ```
+
+**Recommended models** (as of late 2024):
+- `llama-3.1-70b-versatile` - Best for tool calling
+- `llama-3.1-8b-instant` - Faster, good for simple tasks  
+- `gemma-7b-it` - Alternative option
+
+### Dependencies
+This code uses LangChain's agent API (LangGraph). Ensure you have compatible versions:
+```bash
+pip install langchain langgraph langchain-groq python-dotenv
+```
